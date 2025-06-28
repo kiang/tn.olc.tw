@@ -103,10 +103,23 @@ class TainanDataIntegration {
         });
     }
 
-    truncateContent(content, maxLength = 200) {
+    truncateContent(content, maxLength = 200, addEllipsis = true) {
         if (!content) return '';
-        if (content.length <= maxLength) return content;
-        return content.substring(0, maxLength) + '...';
+        if (content.length <= maxLength) return addEllipsis ? this.formatContent(content) : content;
+        const truncated = content.substring(0, maxLength);
+        return addEllipsis ? this.formatContent(truncated) + '...' : truncated;
+    }
+
+    formatContent(content) {
+        if (!content) return '';
+        
+        // Convert line breaks to HTML paragraphs and breaks
+        return content
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .map(line => `<p class="govuk-body" style="margin-bottom: 0.5rem;">${line}</p>`)
+            .join('');
     }
 
     getSourceBadge(source) {
@@ -159,7 +172,7 @@ class TainanDataIntegration {
                     </div>
                     <div class="news-content">
                         <div class="news-preview">
-                            <p class="govuk-body">${isExpanded ? news.content : truncatedContent}</p>
+                            ${isExpanded ? this.formatContent(news.content) : truncatedContent}
                         </div>
                         ${showExpand ? `
                             <button type="button" 
@@ -232,7 +245,7 @@ class TainanDataIntegration {
             <div class="news-item">
                 <h4 class="govuk-heading-s">${item.title || '無標題'}</h4>
                 <p class="news-date">${this.formatDate(item.published)}</p>
-                <p class="govuk-body">${this.truncateContent(item.content, 150)}</p>
+                <div class="news-content-formatted">${this.truncateContent(item.content, 150)}</div>
                 <div style="margin-top: 0.5rem;">
                     ${this.getSourceBadge(item.source)}
                     ${item.department ? `<span class="govuk-tag govuk-tag--grey">${item.department}</span>` : ''}
@@ -258,8 +271,24 @@ class TainanDataIntegration {
     highlightSearchTerm(text, searchTerm) {
         if (!text || !searchTerm) return text;
         
-        const regex = new RegExp(`(${searchTerm})`, 'gi');
+        const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
         return text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+
+    formatContentWithHighlight(content, searchTerm = '') {
+        if (!content) return '';
+        
+        let formattedContent = content
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .map(line => {
+                const highlightedLine = searchTerm ? this.highlightSearchTerm(line, searchTerm) : line;
+                return `<p class="govuk-body" style="margin-bottom: 0.5rem;">${highlightedLine}</p>`;
+            })
+            .join('');
+            
+        return formattedContent;
     }
 
     async init() {
@@ -416,20 +445,54 @@ class TainanDataIntegration {
                 <p class="govuk-body">請嘗試使用其他關鍵字進行搜尋。</p>
             `;
         } else {
-            // Create a temporary container for search results
-            const tempContainer = document.createElement('div');
-            const searchData = { allNews: results, expandedItems: this.expandedItems };
-            
-            // Use the existing renderNews method but with search results
-            const originalAllNews = this.allNews;
-            this.allNews = results;
-            this.renderNews(tempContainer, results.length);
-            this.allNews = originalAllNews;
+            // Render search results with highlighting
+            const searchResultsHtml = results.map(news => {
+                const newsId = `${news.source}-${news.id}`;
+                const isExpanded = this.expandedItems.has(newsId);
+                const highlightedTitle = this.highlightSearchTerm(news.title || '無標題', query);
+                const highlightedContent = isExpanded ? 
+                    this.formatContentWithHighlight(news.content, query) : 
+                    this.formatContentWithHighlight(this.truncateContent(news.content, 150, false), query);
+                const showExpand = news.content && news.content.length > 150;
+                
+                return `
+                    <div class="news-item" data-news-id="${newsId}">
+                        <div class="news-header">
+                            <h4 class="govuk-heading-s" style="margin-bottom: 0.5rem;">
+                                ${highlightedTitle}
+                            </h4>
+                            <div style="margin-bottom: 0.5rem;">
+                                ${this.getSourceBadge(news.source)}
+                                ${news.department ? `<span class="govuk-tag govuk-tag--grey">${this.highlightSearchTerm(news.department, query)}</span>` : ''}
+                            </div>
+                            <p class="news-date">${this.formatDate(news.published)}</p>
+                        </div>
+                        <div class="news-content">
+                            <div class="news-preview">
+                                ${highlightedContent}
+                            </div>
+                            ${showExpand ? `
+                                <button type="button" 
+                                        class="govuk-link news-expand-btn" 
+                                        data-news-id="${newsId}"
+                                        style="background: none; border: none; padding: 0; text-decoration: underline; cursor: pointer; color: #1d70b8;">
+                                    ${isExpanded ? '收合內容' : '展開全文'}
+                                </button>
+                            ` : ''}
+                            ${news.tags ? `<p class="govuk-body-s" style="color: #505a5f; margin-top: 0.5rem;">${this.highlightSearchTerm(news.tags, query)}</p>` : ''}
+                            ${news.url ? `<p class="govuk-body-s" style="margin-top: 0.5rem;"><a href="${news.url}" class="govuk-link" target="_blank" rel="noopener">查看原文</a></p>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
             
             searchResultsContent.innerHTML = `
                 <p class="govuk-body">找到 <strong>${results.length}</strong> 筆包含「<strong>${query}</strong>」的資訊：</p>
-                ${tempContainer.innerHTML}
+                ${searchResultsHtml}
             `;
+            
+            // Add event listeners for expand/collapse buttons in search results
+            this.setupExpandButtons(searchResultsContent);
         }
         
         searchResults.style.display = 'block';
