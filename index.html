@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="govuk-template">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台南市政府與議會資訊平台 - GOV.TW</title>
+    
+    <!-- GOV.UK Frontend CSS -->
+    <link rel="stylesheet" href="govuk-frontend.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        .custom-header {
+            background-color: #003078;
+            color: white;
+            padding: 1rem 0;
+        }
+        
+        .custom-header h1 {
+            color: white;
+            margin: 0;
+        }
+        
+        
+        .news-item {
+            border-bottom: 1px solid #b1b4b6;
+            padding: 1rem 0;
+        }
+        
+        .news-item:last-child {
+            border-bottom: none;
+        }
+        
+        .news-date {
+            color: #505a5f;
+            font-size: 0.875rem;
+        }
+        
+        .news-header {
+            margin-bottom: 0.5rem;
+        }
+        
+        .news-content {
+            margin-top: 0.5rem;
+        }
+        
+        .loading-message {
+            text-align: center;
+            padding: 2rem;
+            color: #505a5f;
+        }
+        
+        .date-selector-section {
+            background-color: #f8f8f8;
+            border-left: 4px solid #1d70b8;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .quick-date-buttons .govuk-button--secondary {
+            font-size: 0.875rem;
+            padding: 0.4rem 0.8rem;
+        }
+        
+        .news-expand-btn {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .news-expand-btn:hover {
+            color: #003078 !important;
+        }
+        
+        .news-preview {
+            transition: all 0.3s ease;
+        }
+        
+        #search-results {
+            border-top: 3px solid #1d70b8;
+            background-color: #f8f8f8;
+            padding: 1.5rem;
+            border-radius: 4px;
+        }
+        
+        #search-results h3 {
+            margin-top: 0;
+        }
+        
+        .search-highlight {
+            background-color: #ffdd00;
+            padding: 0 2px;
+        }
+        
+        .footer-custom {
+            background-color: #0b0c0c;
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+
+    <!-- Skip link -->
+    <a href="#main-content" class="govuk-skip-link" data-module="govuk-skip-link">跳到主要內容</a>
+
+    <!-- Header -->
+    <header class="govuk-header custom-header" role="banner" data-module="govuk-header">
+        <div class="govuk-width-container">
+            <div class="govuk-header__content">
+                <h1 class="govuk-heading-xl">台南市政府與議會資訊平台</h1>
+                <p class="govuk-body-l">整合台南市政府與議會的公開資訊，提供統一查詢介面</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <div class="govuk-width-container">
+        <main class="govuk-main-wrapper" id="main-content" role="main">
+            
+            <!-- Breadcrumb -->
+            <div class="govuk-breadcrumbs">
+                <ol class="govuk-breadcrumbs__list">
+                    <li class="govuk-breadcrumbs__list-item">
+                        <a class="govuk-breadcrumbs__link" href="#home">首頁</a>
+                    </li>
+                    <li class="govuk-breadcrumbs__list-item">
+                        台南市資訊平台
+                    </li>
+                </ol>
+            </div>
+
+            <!-- Date Selector -->
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-full">
+                    <div class="date-selector-section">
+                    <div class="govuk-form-group">
+                        <label class="govuk-label govuk-label--m" for="date-picker">選擇查詢日期</label>
+                        <div class="govuk-hint">選擇不同日期查看該日的新聞與公告資訊</div>
+                        <div class="govuk-input__wrapper" style="max-width: 300px;">
+                            <input class="govuk-input" id="date-picker" name="date-picker" type="date">
+                        </div>
+                        <p class="govuk-body-s" style="margin-top: 0.5rem; color: #505a5f;">
+                            目前顯示：<span id="current-date-display">今日</span>
+                        </p>
+                        <div class="quick-date-buttons" style="margin-top: 1rem;">
+                            <p class="govuk-body-s" style="margin-bottom: 0.5rem;">快速選擇：</p>
+                            <button type="button" class="govuk-button govuk-button--secondary" id="quick-today" style="margin-right: 0.5rem;">今日</button>
+                            <button type="button" class="govuk-button govuk-button--secondary" id="quick-yesterday" style="margin-right: 0.5rem;">昨日</button>
+                            <button type="button" class="govuk-button govuk-button--secondary" id="quick-day-before" style="margin-right: 0.5rem;">前日</button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- News and Information -->
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-full">
+                    <h2 class="govuk-heading-l">台南市政府與議會資訊</h2>
+                    <div id="latest-news">
+                        <div class="loading-message">
+                            <p class="govuk-body">載入資訊中...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search functionality -->
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-full">
+                    <h2 class="govuk-heading-l">資訊搜尋</h2>
+                    <form class="govuk-form-group" id="search-form">
+                        <label class="govuk-label govuk-label--m" for="search-input">搜尋關鍵字</label>
+                        <div class="govuk-hint">請輸入您要搜尋的新聞、公告或服務資訊關鍵字</div>
+                        <div class="govuk-input__wrapper">
+                            <input class="govuk-input" id="search-input" name="search" type="text" placeholder="例如：預算、道路、議會...">
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <button class="govuk-button" data-module="govuk-button" type="submit">搜尋</button>
+                            <button class="govuk-button govuk-button--secondary" type="button" id="clear-search" style="margin-left: 0.5rem;">清除搜尋</button>
+                        </div>
+                    </form>
+                    
+                    <!-- Search results section -->
+                    <div id="search-results" style="margin-top: 2rem; display: none;">
+                        <h3 class="govuk-heading-m">搜尋結果</h3>
+                        <div id="search-results-content"></div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="govuk-footer footer-custom" role="contentinfo">
+        <div class="govuk-width-container">
+            <div class="govuk-footer__meta">
+                <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+                    <h2 class="govuk-heading-m" style="color: white;">台南市政府與議會資訊平台</h2>
+                    <ul class="govuk-footer__inline-list">
+                        <li class="govuk-footer__inline-list-item">
+                            <a class="govuk-footer__link" href="#privacy" style="color: white;">隱私權政策</a>
+                        </li>
+                        <li class="govuk-footer__inline-list-item">
+                            <a class="govuk-footer__link" href="#accessibility" style="color: white;">網站無障礙聲明</a>
+                        </li>
+                        <li class="govuk-footer__inline-list-item">
+                            <a class="govuk-footer__link" href="#contact" style="color: white;">聯絡我們</a>
+                        </li>
+                    </ul>
+                    <p class="govuk-body-s" style="color: #b1b4b6; margin-top: 1rem;">
+                        本平台整合台南市政府與議會公開資訊，採用 GOV.UK Design System 設計標準
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- GOV.UK Frontend JavaScript (Simplified) -->
+    <script>
+        // Simple GOV.UK Frontend initialization for basic functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Initialize skip links
+            const skipLinks = document.querySelectorAll('[data-module="govuk-skip-link"]');
+            skipLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    const target = document.querySelector(link.getAttribute('href'));
+                    if (target) {
+                        target.focus();
+                    }
+                });
+            });
+            
+            // Initialize buttons
+            const buttons = document.querySelectorAll('[data-module="govuk-button"]');
+            buttons.forEach(function(button) {
+                // Simple double-click prevention
+                let clicked = false;
+                button.addEventListener('click', function() {
+                    if (clicked) return false;
+                    clicked = true;
+                    setTimeout(function() { clicked = false; }, 1000);
+                });
+            });
+        });
+    </script>
+    <!-- Data Integration Script -->
+    <script src="data-integration.js"></script>
+</body>
+</html>
