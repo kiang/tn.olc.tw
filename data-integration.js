@@ -111,8 +111,8 @@ class TainanDataIntegration {
 
     getSourceBadge(source) {
         return source === 'council' ? 
-            '<span class="govuk-tag govuk-tag--blue">議會</span>' : 
-            '<span class="govuk-tag govuk-tag--green">市政府</span>';
+            '<span class="govuk-tag govuk-tag--blue" style="border-radius: 15px; font-weight: 600; text-transform: none; padding: 0.3rem 0.8rem;">🏛️ 議會</span>' : 
+            '<span class="govuk-tag govuk-tag--green" style="border-radius: 15px; font-weight: 600; text-transform: none; padding: 0.3rem 0.8rem;">🏢 市政府</span>';
     }
 
     renderNews(container, limit = 10) {
